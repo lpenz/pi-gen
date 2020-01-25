@@ -10,6 +10,3 @@ RUN apt-get -y update && \
         binfmt-support ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-COPY . /pi-gen/
-
-VOLUME [ "/pi-gen/work", "/pi-gen/deploy"]
