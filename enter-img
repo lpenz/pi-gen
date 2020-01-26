@@ -1,0 +1,42 @@
+#!/bin/bash
+
+LOOPDEV=/dev/loop0
+IMAGE=${1?Invalid image}
+ROOTDIR=${2?Invalid target dir}
+
+ulimit -v unlimited
+
+set -x -e
+
+(
+    if ! [ -d "$ROOTDIR" ]; then
+        mkdir -p "$ROOTDIR"
+        trap 'rmdir "$ROOTDIR"'
+    fi
+    (
+        sudo losetup "$LOOPDEV" "$IMAGE"
+        trap 'sudo losetup -d "$LOOPDEV"' EXIT
+        (
+            sudo mount "${LOOPDEV}p2" "$ROOTDIR"
+            trap 'sudo umount $ROOTDIR' EXIT
+            (
+                sudo mount -t proc proc "${ROOTDIR}/proc"
+                trap 'sudo umount "$ROOTDIR/proc"' EXIT
+                (
+                    sudo mount --bind /dev "${ROOTDIR}/dev"
+                    trap 'sudo umount "$ROOTDIR/dev"' EXIT
+                    (
+                        sudo mount --bind /dev/pts "${ROOTDIR}/dev/pts"
+                        trap 'sudo umount "$ROOTDIR/dev/pts"' EXIT
+                        (
+                            sudo mount --bind /sys "${ROOTDIR}/sys"
+                            trap 'sudo umount "$ROOTDIR/sys"' EXIT
+
+                            sudo capsh --drop=cap_setfcap "--chroot=${ROOTDIR}/" -- -i
+                        )
+                    )
+                )
+            )
+        )
+    )
+)
