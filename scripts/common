@@ -86,6 +86,10 @@ on_chroot() {
 		mount --bind /dev/pts "${ROOTFS_DIR}/dev/pts"
 	fi
 
+	if ! mount | grep -q "$(realpath "${ROOTFS_DIR}"/dev/shm)"; then
+		mount --bind /dev/shm "${ROOTFS_DIR}/dev/shm"
+	fi
+
 	if ! mount | grep -q "$(realpath "${ROOTFS_DIR}"/sys)"; then
 		mount --bind /sys "${ROOTFS_DIR}/sys"
 	fi
